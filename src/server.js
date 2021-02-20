@@ -1,6 +1,7 @@
 const express = require('express');
 const ejs = require('ejs');
 const path = require('path');
+const pdf = require('html-pdf');
 const app = express();
 
 const passengers = [
@@ -29,10 +30,25 @@ app.get('/', (request, response) => {
         return response.send('Erro na leitura do arquivo!')
       }
 
-      return response.send(data);
-    })
+      const options = {
+        height: "11.25in",
+        width: "8.5in",
+        header: {
+          height: "20mm"
+        },
+        footer: {
+          height: "20mm"
+        }
+      }
 
-  
+      pdf.create(data, options).toFile("report.pdf", (err, data) => {
+        if(err) {
+          return response.send("Erro ao gerar o PDF")
+        }
+
+        return response.send(data);
+      }) 
+    }) 
 });
 
 app.listen(3000);
