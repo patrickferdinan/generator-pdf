@@ -1,7 +1,7 @@
 const express = require('express');
 const ejs = require('ejs');
 const path = require('path');
-const pdf = require('html-pdf');
+const puppeteer = require('puppeteer');
 const app = express();
 
 const passengers = [
@@ -22,6 +22,33 @@ const passengers = [
   },
 ]
 
+app.get('/pdf', async(request,response) => {
+
+  const browser = await puppeteer.launch({ headless: true })
+  const page = await browser.newPage()
+
+  await page.goto('http://localhost:3000/', { 
+    waitUntil: 'networkidle0'
+  })
+
+  const pdf = await page.pdf({
+    printBackground: true,
+    format: 'Letter',
+    margin: {
+      top: "20px",
+      bottom: "40px",
+      left: "20px",
+      right: "20px"
+    }
+  })
+
+  await browser.close()
+
+  response.contentType("application/pdf")
+
+  return response.send(pdf)
+})
+
 app.get('/', (request, response) => {
 
   const filePath = path.join(__dirname, 'print.ejs')
@@ -30,25 +57,8 @@ app.get('/', (request, response) => {
         return response.send('Erro na leitura do arquivo!')
       }
 
-      const options = {
-        height: "11.25in",
-        width: "8.5in",
-        header: {
-          height: "20mm"
-        },
-        footer: {
-          height: "20mm"
-        }
-      }
-
-      pdf.create(data, options).toFile("report.pdf", (err, data) => {
-        if(err) {
-          return response.send("Erro ao gerar o PDF")
-        }
-
-        return response.send(data);
-      }) 
+        return response.send(data)
     }) 
-});
+})
 
 app.listen(3000);
